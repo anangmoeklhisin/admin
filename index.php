@@ -1,0 +1,648 @@
+<?php
+/**
+ * WebApps Ekstraktor & Laporan Data SIK
+ * RSUSISS - Split Server Architecture
+ * PHP 8.2+ Native
+ */
+require_once __DIR__ . '/config/database.php';
+$dbStatus = Database::getStatus();
+?>
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="WebApps Ekstraktor & Laporan Data SIK - RSUSISS">
+    <meta name="author" content="Data RSUSISS">
+
+    <title>Portal Laporan SIK - Data RSUSISS</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+
+    <!-- DataTables Bootstrap 4 CSS -->
+    <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+
+    <style>
+        body, 
+        button, 
+        input, 
+        select, 
+        textarea, 
+        h1, h2, h3, h4, h5, h6, 
+        .h1, .h2, .h3, .h4, .h5, .h6, 
+        .btn, 
+        .form-control, 
+        .nav-link, 
+        .table, 
+        .sidebar, 
+        .modal,
+        .card-header,
+        .badge {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        #content-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
+            flex: 1 1 auto;
+            background-color: #f8f9fc;
+        }
+
+        #content {
+            flex: 1 0 auto;
+            width: 100%;
+        }
+
+        .container-fluid {
+            width: 100%;
+            max-width: 100%;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+
+        /* Footer selalu menempel rapi di bagian bawah */
+        footer.sticky-footer {
+            margin-top: auto !important;
+            width: 100%;
+            background-color: #ffffff;
+            border-top: 1px solid #e3e6f0;
+            padding: 1.25rem 0;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Tampilan Tabel Fit 100% Layar Tanpa Geser Kanan-Kiri */
+        .table-laporan {
+            width: 100% !important;
+            table-layout: fixed;
+            word-wrap: break-word;
+            word-break: break-word;
+            margin-bottom: 0 !important;
+        }
+
+        .filter-card {
+            border-left: 4px solid #4e73df;
+            background: #ffffff;
+            transition: all 0.2s ease-in-out;
+        }
+        .filter-card:hover {
+            box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08) !important;
+        }
+        .export-btn-group .btn {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.45rem 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-radius: 0.35rem;
+            margin-right: 0.25rem;
+            margin-bottom: 0.35rem;
+            transition: transform 0.15s ease;
+        }
+        .export-btn-group .btn:hover {
+            transform: translateY(-1px);
+        }
+        .badge-kategori {
+            font-size: 80%;
+            font-weight: 700;
+        }
+        .table-laporan th {
+            font-size: 0.67rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+            background-color: #f8f9fc;
+            vertical-align: middle !important;
+            padding: 8px 13px 8px 3px !important;
+            text-align: center;
+            line-height: 1.2;
+            white-space: normal !important;
+            word-break: normal;
+        }
+        .table-laporan td {
+            font-size: 0.74rem !important;
+            vertical-align: middle !important;
+            padding: 6px 4px !important;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+        .table-laporan td.col-date,
+        .table-laporan td.col-time {
+            font-size: 0.72rem !important;
+            white-space: nowrap !important;
+            text-align: center;
+            padding: 6px 2px !important;
+            letter-spacing: -0.2px;
+        }
+        /* Kompresi padding DataTables sort arrow agar hemat lebar kolom */
+        table.dataTable thead>tr>th.sorting,
+        table.dataTable thead>tr>th.sorting_asc,
+        table.dataTable thead>tr>th.sorting_desc {
+            padding-right: 14px !important;
+        }
+        table.dataTable thead .sorting:before,
+        table.dataTable thead .sorting_asc:before,
+        table.dataTable thead .sorting_desc:before,
+        table.dataTable thead .sorting:after,
+        table.dataTable thead .sorting_asc:after,
+        table.dataTable thead .sorting_desc:after {
+            right: 2px !important;
+            font-size: 0.65rem !important;
+            bottom: 50% !important;
+            margin-bottom: -0.45rem;
+        }
+        .loading-spinner-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.75);
+            display: none;
+            z-index: 10;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.35rem;
+        }
+        .quick-range {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.55rem;
+            cursor: pointer;
+        }
+    </style>
+
+</head>
+
+<body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
+                <div class="sidebar-brand-icon rotate-n-15">
+                    <i class="fas fa-hospital-alt"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Data RSUSISS</div>
+            </a>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+
+            <!-- Nav Item - Dashboard Laporan -->
+            <!-- <li class="nav-item active">
+                <a class="nav-link" href="index.php">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard Laporan</span></a>
+            </li> -->
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+           <!-- <div class="sidebar-heading">
+                Laporan Unit & Poli
+            </div> -->
+
+            <!-- Nav Item - Radiologi Collapse Menu -->
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseRadiologi"
+                    aria-expanded="false" aria-controls="collapseRadiologi">
+                    <i class="fas fa-fw fa-x-ray"></i>
+                    <span>Radiologi</span>
+                </a>
+                <div id="collapseRadiologi" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item sidebar-filter-link quick-range" href="#" data-range="month" data-kategori="RADIOLOGI">Laporan Bulanan</a>
+                    </div>
+                </div>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                    <!-- Sidebar Toggle (Topbar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link rounded-circle mr-3" title="Perluas / Perkecil Sidebar">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- Topbar Title Info (Intranet) -->
+                    <div class="d-none d-md-flex align-items-center text-gray-700 font-weight-bold ml-2">
+                        <span>Portal Data Rumah Sakit Saras Ibnu Sina Sukowati</span>
+                    </div>
+
+                    <!-- Topbar Navbar -->
+                    <ul class="navbar-nav ml-auto align-items-center">
+
+                        
+
+                        <!-- Nav Item - User Information -->
+                        <!-- <li class="nav-item dropdown no-arrow ml-2">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small font-weight-bold">Staf RSUSISS</span>
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg" alt="User">
+                            </a>
+                          
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                                aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#settingModal">
+                                    <i class="fas fa-server fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Status Koneksi Database
+                                </a>
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#guideModal">
+                                    <i class="fas fa-book fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Panduan Ekspor Laporan
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" onclick="location.reload();">
+                                    <i class="fas fa-sync-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Muat Ulang Halaman
+                                </a>
+                            </div>
+                        </li> -->
+
+                    </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+
+                    <!-- ============================================================== -->
+                    <!-- SECTION 1: FILTER PANEL (Card Atas - Sesuai PRD Section 3.1 & 6) -->
+                    <!-- ============================================================== -->
+                    <div class="card shadow mb-4 filter-card" id="filterPanel">
+                        <div class="card-header py-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between bg-white border-bottom">
+                            <h6 class="m-0 font-weight-bold text-primary mb-2 mb-md-0">
+                                <i class="fas fa-filter mr-1"></i> Parameter Pencarian & Filter Radiologi
+                            </h6>
+                            <!-- Quick Toggle Status Rawat (Ranap & Ralan) -->
+                            <div class="btn-group btn-group-sm" role="group" id="btnGroupStatusRawat">
+                                <button type="button" class="btn btn-primary btn-sm status-toggle-btn active font-weight-bold" data-status="SEMUA">
+                                    <i class="fas fa-list mr-1"></i> Semua
+                                </button>
+                                <button type="button" class="btn btn-outline-info btn-sm status-toggle-btn font-weight-bold" data-status="ralan">
+                                    <i class="fas fa-walking mr-1"></i> Rawat Jalan (Ralan)
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm status-toggle-btn font-weight-bold" data-status="ranap">
+                                    <i class="fas fa-bed mr-1"></i> Rawat Inap (Ranap)
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form id="formFilter" onsubmit="return false;">
+                                <div class="form-row align-items-end">
+                                    <!-- Input: Tanggal Mulai (F1.01) -->
+                                    <div class="form-group col-md-2 col-sm-6 mb-2">
+                                        <label for="tgl_mulai" class="small font-weight-bold text-gray-700">
+                                            <i class="far fa-calendar-alt text-primary mr-1"></i> Tanggal Mulai
+                                        </label>
+                                        <input type="date" class="form-control form-control-sm" id="tgl_mulai" name="tgl_mulai" required>
+                                    </div>
+
+                                    <!-- Input: Tanggal Akhir (F1.01) -->
+                                    <div class="form-group col-md-2 col-sm-6 mb-2">
+                                        <label for="tgl_akhir" class="small font-weight-bold text-gray-700">
+                                            <i class="far fa-calendar-check text-primary mr-1"></i> Tanggal Akhir
+                                        </label>
+                                        <input type="date" class="form-control form-control-sm" id="tgl_akhir" name="tgl_akhir" required>
+                                    </div>
+
+                                    <!-- Select: Status / Jenis Rawat (Ranap / Ralan) -->
+                                    <div class="form-group col-md-3 col-sm-6 mb-2">
+                                        <label for="status_rawat" class="small font-weight-bold text-gray-700">
+                                            <i class="fas fa-hospital-user text-primary mr-1"></i> Jenis Rawat
+                                        </label>
+                                        <select class="form-control form-control-sm" id="status_rawat" name="status_rawat">
+                                            <option value="SEMUA" selected>Semua Jenis Rawat (Ranap & Ralan)</option>
+                                            <option value="ralan">Rawat Jalan (Ralan)</option>
+                                            <option value="ranap">Rawat Inap (Ranap)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Select: Pemeriksaan Radiologi (F1.01) -->
+                                    <div class="form-group col-md-3 col-sm-6 mb-2">
+                                        <label for="kategori" class="small font-weight-bold text-gray-700">
+                                            <i class="fas fa-x-ray text-primary mr-1"></i> Pemeriksaan Radiologi
+                                        </label>
+                                        <select class="form-control form-control-sm" id="kategori" name="kategori">
+                                            <option value="SEMUA" selected>Semua Pemeriksaan Radiologi</option>
+                                            <option value="Thorax">Thorax Foto (Rontgen Dada)</option>
+                                            <option value="USG">USG (Abdomen / Kandungan)</option>
+                                            <option value="CT-Scan">CT-Scan (Kepala / Non-Kontras)</option>
+                                            <option value="Extremitas">Foto Extremitas / Tulang</option>
+                                            <option value="Panoramic">Panoramic Gigi / Dental</option>
+                                            <option value="Lumbosacral">Foto Vertebra / Lumbosacral</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Tombol: Tampilkan Data & Reset (F1.02) -->
+                                    <div class="form-group col-md-2 col-sm-6 mb-2">
+                                        <div class="btn-group w-100" role="group">
+                                            <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="btn-filter">
+                                                <i class="fas fa-search mr-1"></i> Tampilkan
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-reset" title="Kembalikan Filter Awal">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+
+
+                    <!-- ============================================================== -->
+                    <!-- SECTION 2: DATA PANEL (Card Bawah - Sesuai PRD Section 3.2, 3.3 & 6) -->
+                    <!-- ============================================================== -->
+                    <div class="card shadow mb-4 position-relative">
+                        <!-- Loading Overlay -->
+                        <div class="loading-spinner-overlay" id="loading-overlay">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                    <span class="sr-only">Memuat Data...</span>
+                                </div>
+                                <h6 class="font-weight-bold text-gray-700 mt-2">Menarik data dari database SIK...</h6>
+                            </div>
+                        </div>
+
+                        <div class="card-header py-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between bg-white border-bottom">
+                            <h6 class="m-0 font-weight-bold text-primary mb-2 mb-md-0">
+                                <i class="fas fa-table mr-1"></i> Data Viewer Laporan SIK
+                            </h6>
+
+                            <!-- Modul Ekspor Laporan (F3.01, F3.02 & F3.03: Copy, CSV, Excel, PDF, Print) -->
+                            <div class="export-btn-group">
+                               <!--  <button type="button" class="btn btn-secondary shadow-sm" id="btn-export-copy" title="Salin data tabel ke clipboard">
+                                    <i class="fas fa-copy text-white-50"></i> Copy
+                                </button>
+                                <button type="button" class="btn btn-info shadow-sm" id="btn-export-csv" title="Unduh file format CSV">
+                                    <i class="fas fa-file-csv text-white-50"></i> CSV
+                                </button> -->
+                                <button type="button" class="btn btn-success shadow-sm" id="btn-export-excel" title="Unduh file format Microsoft Excel">
+                                    <i class="fas fa-file-excel text-white-50"></i> Excel (.xlsx)
+                                </button>
+                                <button type="button" class="btn btn-danger shadow-sm" id="btn-export-pdf" title="Cetak / Unduh dokumen PDF">
+                                    <i class="fas fa-file-pdf text-white-50"></i> PDF
+                                </button>
+                                <button type="button" class="btn btn-dark shadow-sm" id="btn-export-print" title="Cetak laporan langsung">
+                                    <i class="fas fa-print text-white-50"></i> Print
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-2 p-md-3">
+                            <!-- Tabel Data Viewer (F2.01 - F2.04: Tabel Dinamis, Live Search, Sorting, Pagination) -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover table-striped table-laporan" id="tabelLaporan" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="width: 3%;">NO</th>
+                                            <th style="width: 13%;">NAMA PASIEN</th>
+                                            <th style="width: 13.5%;">PEMERIKSAAN</th>
+                                            <th class="text-center" style="width: 8%;">TANGGAL<br>PEMERIKSAAN</th>
+                                            <th class="text-center" style="width: 6.5%;">WAKTU<br>PEMERIKSAAN</th>
+                                            <th class="text-center" style="width: 8%;">TANGGAL SELESAI<br>PEMERIKSAAN</th>
+                                            <th class="text-center" style="width: 6.5%;">WAKTU SELESAI<br>PEMERIKSAAN</th>
+                                            <th class="text-center" style="width: 8%;">TANGGAL<br>EXPERTISE</th>
+                                            <th class="text-center" style="width: 6.5%;">WAKTU<br>EXPERTISE</th>
+                                            <th style="width: 13.5%;">DOKTER PENGIRIM</th>
+                                            <th style="width: 13.5%;">UNIT PERUJUK</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Data diisi secara dinamis melalui DataTables AJAX -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white shadow-sm border-top">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>&copy; ANANG MUKLHISIN 2026</span>
+                    </div>
+                </div>
+            </footer>
+            <!-- End of Footer -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- ============================================================== -->
+    <!-- MODAL: KONEKSI DATABASE (Setting / Info Split Server)          -->
+    <!-- ============================================================== -->
+    <div class="modal fade" id="settingModal" tabindex="-1" role="dialog" aria-labelledby="settingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold" id="settingModalLabel">
+                        <i class="fas fa-server mr-2"></i> Konfigurasi Split Server & Koneksi Database SIK
+                    </h5>
+                    <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">
+                        Aplikasi ini menggunakan arsitektur <em>split server</em> lintas sistem operasi (Windows untuk Web Server, Linux untuk Database MySQL SIK) sesuai dokumen spesifikasi <strong>PRD v1.2</strong>.
+                    </p>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 bg-light h-100">
+                                <h6 class="font-weight-bold text-primary mb-2">
+                                    <i class="fab fa-windows mr-1"></i> Web Server (Aplikasi)
+                                </h6>
+                                <ul class="list-unstyled small mb-0">
+                                    <li><strong>IP Address:</strong> <code>192.168.1.36</code></li>
+                                    <li><strong>Sistem Operasi:</strong> Windows</li>
+                                    <li><strong>Environment:</strong> XAMPP (Apache)</li>
+                                    <li><strong>Versi PHP:</strong> PHP 8.2 (PDO MySQL)</li>
+                                    <li><strong>Peran:</strong> Antarmuka, Filter, dan Client-side Exporter</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 bg-light h-100">
+                                <h6 class="font-weight-bold text-success mb-2">
+                                    <i class="fas fa-database mr-1"></i> Database Server (SIK)
+                                </h6>
+                                <ul class="list-unstyled small mb-0">
+                                    <li><strong>IP Address:</strong> <code>192.168.1.2</code></li>
+                                    <li><strong>Port MySQL:</strong> <code>3306</code></li>
+                                    <li><strong>Nama Database:</strong> <code>sik</code></li>
+                                    <li><strong>User Akun (NF.01):</strong> <code>report_viewer</code> (Read-Only)</li>
+                                    <li><strong>Akses Privileges:</strong> <code>GRANT SELECT ON sik.*</code></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Uji Koneksi Live -->
+                    <div class="card mt-2 border-left-info shadow-sm">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="font-weight-bold text-gray-800 mb-1">Uji Status Koneksi Port 3306</h6>
+                                    <small class="text-muted">Kirimkan request ping PDO ke <code>192.168.1.2:3306/sik</code></small>
+                                </div>
+                                <button type="button" class="btn btn-info btn-sm font-weight-bold" id="btn-test-db">
+                                    <i class="fas fa-sync-alt mr-1"></i> Uji Koneksi Sekarang
+                                </button>
+                            </div>
+                            <div id="db-test-result"></div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-secondary small mt-3 mb-0">
+                        <strong><i class="fas fa-shield-alt text-primary mr-1"></i> Keamanan Sesuai PRD (NF.01):</strong><br>
+                        Koneksi dari Web Server tidak menggunakan user <code>root</code>. Query dijamin 100% <em>Read-Only (SELECT)</em> tanpa adanya operasi manipulasi data (Create, Update, Delete).
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm" type="button" data-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL: PANDUAN PENGGUNAAN & EKSPOR LAPORAN                     -->
+    <!-- ============================================================== -->
+    <div class="modal fade" id="guideModal" tabindex="-1" role="dialog" aria-labelledby="guideModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title font-weight-bold" id="guideModalLabel">
+                        <i class="fas fa-book mr-2"></i> Panduan Ekstraksi &amp; Ekspor Laporan SIK
+                    </h5>
+                    <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="font-weight-bold text-gray-800 mb-2">1. Cara Melakukan Filter Data (F1.01)</h6>
+                    <p class="small text-muted mb-3">
+                        Pilih <strong>Tanggal Mulai</strong> dan <strong>Tanggal Akhir</strong> yang diinginkan, kemudian tentukan <strong>Kategori/Unit</strong> (misalnya: Radiologi, Rawat Jalan, dsb). Klik tombol <strong>"Tampilkan Data"</strong> untuk mengirim query ke database server.
+                    </p>
+
+                    <h6 class="font-weight-bold text-gray-800 mb-2">2. Fitur Pencarian Cepat &amp; Pengurutan (F2.02 &amp; F2.03)</h6>
+                    <p class="small text-muted mb-3">
+                        Ketik nama pasien, nomor rawat, nama dokter, atau tindakan pada kolom <em>"Cari data instan..."</em> di atas tabel. Data akan tersaring secara otomatis seketika. Klik judul kolom mana pun untuk mengurutkan (A-Z atau tanggal terbaru).
+                    </p>
+
+                    <h6 class="font-weight-bold text-gray-800 mb-2">3. Opsi Ekspor Laporan (F3.01 - F3.03 &amp; NF.02)</h6>
+                    <div class="row small mb-2">
+                        <div class="col-md-6 mb-2">
+                            <span class="badge badge-secondary px-2 py-1"><i class="fas fa-copy"></i> Copy:</span> Salin seluruh data yang tampil untuk langsung ditempel (*paste*) ke Microsoft Excel.
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <span class="badge badge-info px-2 py-1"><i class="fas fa-file-csv"></i> CSV:</span> Unduh data dalam format CSV standar (UTF-8 BOM).
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <span class="badge badge-success px-2 py-1"><i class="fas fa-file-excel"></i> Excel:</span> Unduh file lembar kerja Excel (.xlsx/.xls) dengan kop dan tabel rapi.
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <span class="badge badge-danger px-2 py-1"><i class="fas fa-file-pdf"></i> PDF:</span> Buka jendela pratinjau dokumen cetak A4 landscape dengan kop surat resmi.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm" type="button" data-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="js/sb-admin-2.min.js"></script>
+
+    <!-- Page level plugins (DataTables) -->
+    <script src="vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+    <!-- Page level custom script untuk Laporan SIK -->
+    <script src="js/laporan-sik.js"></script>
+
+</body>
+
+</html>

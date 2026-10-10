@@ -11279,3 +11279,12 @@ footer.sticky-footer .copyright {
 body.sidebar-toggled footer.sticky-footer {
   width: 100%;
 }
+
+/* Sembunyikan notifikasi lonceng (Alerts), pesan (Messages), dan garis pembatas topbar */
+.navbar-nav .nav-item:has(#alertsDropdown),
+.navbar-nav .nav-item:has(#messagesDropdown),
+#alertsDropdown,
+#messagesDropdown,
+.topbar-divider {
+  display: none !important;
+}

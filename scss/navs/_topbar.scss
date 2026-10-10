@@ -142,3 +142,12 @@
     }
   }
 }
+
+// Sembunyikan notifikasi lonceng (Alerts), pesan (Messages), dan garis pembatas topbar di semua halaman
+.navbar-nav .nav-item:has(#alertsDropdown),
+.navbar-nav .nav-item:has(#messagesDropdown),
+#alertsDropdown,
+#messagesDropdown,
+.topbar-divider {
+  display: none !important;
+}
