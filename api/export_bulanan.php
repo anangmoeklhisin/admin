@@ -249,6 +249,11 @@ foreach ($allRows as $r) {
     if ($isMsct) {
         $tables[6]['rows'][] = $r;
     }
+
+    // USG Dari Luar RS
+    if ($isUsg && $isLuarRs) {
+        $usgLuarRsCount++;
+    }
 }
 
 // Bangun sheet1.xml (1 Sheet, 6 Tabel Bertingkat Sesuai Contoh File)
@@ -323,6 +328,74 @@ foreach ($tables as $tNum => $tData) {
     $currRow++;
 }
 
+// Rekapitulasi Akhir (Total Pemeriksaan Per Tabel & Total 1 Bulan Sesuai Format Resmi)
+$countT1 = count($tables[1]['rows']);
+$countT2 = count($tables[2]['rows']);
+$countT5 = count($tables[5]['rows']);
+$countT3 = count($tables[3]['rows']);
+$countT4 = count($tables[4]['rows']);
+$countT6 = count($tables[6]['rows']);
+$countTotal = $countT1 + $countT2 + $countT5 + $countT3 + $countT4 + $usgLuarRsCount + $countT6;
+
+$recapItems = [
+    [
+        'label' => "TINDAKAN PASIEN RADIOLOGI RONTGEN TANPA KONTRAS RAWAT JALAN BULAN $bulanText",
+        'count' => $countT1
+    ],
+    [
+        'label' => "TINDAKAN PASIEN RADIOLOGI RONTGEN TANPA KONTRAS RAWAT INAP BULAN $bulanText",
+        'count' => $countT2
+    ],
+    [
+        'label' => "TINDAKAN PASIEN RADIOLOGI RONTGEN TANPA KONTRAS RUJUKAN DARI LUAR RS BULAN $bulanText",
+        'count' => $countT5
+    ],
+    [
+        'label' => "TINDAKAN PASIEN RADIOLOGI USG RAWAT JALAN BULAN  $bulanText",
+        'count' => $countT3
+    ],
+    [
+        'label' => "TINDAKAN PASIEN RADIOLOGI USG RAWAT INAP BULAN $bulanText",
+        'count' => $countT4
+    ],
+    [
+        'label' => "TINDAKAN PASIEN RADIOLOGI USG LUAR RS BULAN $bulanText",
+        'count' => $usgLuarRsCount
+    ],
+    [
+        'label' => "PASIEN RADIOLOGI KE LUAR RS $bulanText ( MSCT )",
+        'count' => $countT6
+    ],
+    [
+        'label' => "JUMLAH TINDAKAN PASIEN RADIOLOGI BULAN $bulanText",
+        'count' => $countTotal
+    ]
+];
+
+$mergeCells = [];
+
+foreach ($recapItems as $item) {
+    $sheetRowsXml .= '<row r="' . $currRow . '" spans="1:12">';
+    $sheetRowsXml .= '<c r="B' . $currRow . '" s="7" t="inlineStr"><is><t>' . escapeXml($item['label']) . '</t></is></c>';
+    for ($col = 'C'; $col <= 'K'; $col++) {
+        $sheetRowsXml .= '<c r="' . $col . $currRow . '" s="7"/>';
+    }
+    $sheetRowsXml .= '<c r="L' . $currRow . '" s="6"><v>' . $item['count'] . '</v></c>';
+    $sheetRowsXml .= '</row>';
+    
+    $mergeCells[] = "B$currRow:K$currRow";
+    $currRow++;
+}
+
+$mergeCellsXml = '';
+if (!empty($mergeCells)) {
+    $mergeCellsXml = '<mergeCells count="' . count($mergeCells) . '">';
+    foreach ($mergeCells as $mc) {
+        $mergeCellsXml .= '<mergeCell ref="' . $mc . '"/>';
+    }
+    $mergeCellsXml .= '</mergeCells>';
+}
+
 // Konstruksi dokumen XML Worksheet lengkap
 $fullSheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
@@ -349,6 +422,7 @@ $fullSheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <sheetData>
 ' . $sheetRowsXml . '
 </sheetData>
+' . $mergeCellsXml . '
 <pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
 </worksheet>';
 
