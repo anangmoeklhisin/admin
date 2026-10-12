@@ -27,7 +27,7 @@ $dbStatus = Database::getStatus();
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
 
     <!-- Custom styles for this template-->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
@@ -36,6 +36,10 @@ $dbStatus = Database::getStatus();
     <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
 
     <style>
+        *, *::before, *::after {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        }
+
         body, 
         button, 
         input, 
@@ -43,17 +47,39 @@ $dbStatus = Database::getStatus();
         textarea, 
         h1, h2, h3, h4, h5, h6, 
         .h1, .h2, .h3, .h4, .h5, .h6, 
+        p, span, a, label, small, strong, b,
         .btn, 
         .form-control, 
         .nav-link, 
         .table, 
+        .table th,
+        .table td,
         .sidebar, 
         .modal,
+        .card,
         .card-header,
-        .badge {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        .card-body,
+        .badge,
+        .dropdown-menu,
+        .dropdown-item,
+        .custom-select,
+        .custom-control-label,
+        .dataTables_wrapper,
+        .dataTables_info,
+        .dataTables_paginate,
+        .dataTables_length,
+        .dataTables_filter {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Pertahankan font icon FontAwesome agar icon tetap tampil sempurna */
+        .fa, .fas, .far, .fal, .fad {
+            font-family: 'Font Awesome 5 Free' !important;
+        }
+        .fab {
+            font-family: 'Font Awesome 5 Brands' !important;
         }
 
         html, body {
