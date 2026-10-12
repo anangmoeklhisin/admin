@@ -4,6 +4,11 @@
  * Format sesuai template contoh_laporan.xlsx RSUSISS
  */
 
+// Aktifkan output buffering dan cegah notice/warning merusak payload biner zip
+ob_start();
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+
 require_once __DIR__ . '/../config/database.php';
 
 // Class SimpleZip murni PHP (tanpa ketergantungan ekstensi eksternal)
@@ -210,6 +215,8 @@ $tables = [
         'rows'  => []
     ]
 ];
+
+$usgLuarRsCount = 0;
 
 foreach ($allRows as $r) {
     $p = strtolower($r['pemeriksaan']);
@@ -428,19 +435,48 @@ $fullSheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 // Kemas file menjadi format .XLSX standar
 $templateDir = __DIR__ . '/xlsx_template';
-$zip = new SimpleZip();
-$zip->addFile('[Content_Types].xml', file_get_contents($templateDir . '/[Content_Types].xml'));
-$zip->addFile('_rels/.rels', file_get_contents($templateDir . '/_rels/.rels'));
-$zip->addFile('xl/workbook.xml', file_get_contents($templateDir . '/xl/workbook.xml'));
-$zip->addFile('xl/_rels/workbook.xml.rels', file_get_contents($templateDir . '/xl/_rels/workbook.xml.rels'));
-$zip->addFile('xl/styles.xml', file_get_contents($templateDir . '/xl/styles.xml'));
-$zip->addFile('xl/theme/theme1.xml', file_get_contents($templateDir . '/xl/theme/theme1.xml'));
-$zip->addFile('docProps/core.xml', file_get_contents($templateDir . '/docProps/core.xml'));
-$zip->addFile('docProps/app.xml', file_get_contents($templateDir . '/docProps/app.xml'));
-$zip->addFile('xl/worksheets/sheet1.xml', $fullSheetXml);
+$xlsxContent = '';
 
-$xlsxContent = $zip->getZip();
+if (class_exists('ZipArchive')) {
+    $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+    $zip = new ZipArchive();
+    if ($zip->open($tempFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+        $zip->addFromString('[Content_Types].xml', file_get_contents($templateDir . '/[Content_Types].xml'));
+        $zip->addFromString('_rels/.rels', file_get_contents($templateDir . '/_rels/.rels'));
+        $zip->addFromString('xl/workbook.xml', file_get_contents($templateDir . '/xl/workbook.xml'));
+        $zip->addFromString('xl/_rels/workbook.xml.rels', file_get_contents($templateDir . '/xl/_rels/workbook.xml.rels'));
+        $zip->addFromString('xl/styles.xml', file_get_contents($templateDir . '/xl/styles.xml'));
+        $zip->addFromString('xl/theme/theme1.xml', file_get_contents($templateDir . '/xl/theme/theme1.xml'));
+        $zip->addFromString('docProps/core.xml', file_get_contents($templateDir . '/docProps/core.xml'));
+        $zip->addFromString('docProps/app.xml', file_get_contents($templateDir . '/docProps/app.xml'));
+        $zip->addFromString('xl/worksheets/sheet1.xml', $fullSheetXml);
+        $zip->close();
+        $xlsxContent = file_get_contents($tempFile);
+        @unlink($tempFile);
+    }
+}
+
+// Fallback ke SimpleZip murni PHP jika ZipArchive tidak aktif
+if (empty($xlsxContent)) {
+    $zip = new SimpleZip();
+    $zip->addFile('[Content_Types].xml', file_get_contents($templateDir . '/[Content_Types].xml'));
+    $zip->addFile('_rels/.rels', file_get_contents($templateDir . '/_rels/.rels'));
+    $zip->addFile('xl/workbook.xml', file_get_contents($templateDir . '/xl/workbook.xml'));
+    $zip->addFile('xl/_rels/workbook.xml.rels', file_get_contents($templateDir . '/xl/_rels/workbook.xml.rels'));
+    $zip->addFile('xl/styles.xml', file_get_contents($templateDir . '/xl/styles.xml'));
+    $zip->addFile('xl/theme/theme1.xml', file_get_contents($templateDir . '/xl/theme/theme1.xml'));
+    $zip->addFile('docProps/core.xml', file_get_contents($templateDir . '/docProps/core.xml'));
+    $zip->addFile('docProps/app.xml', file_get_contents($templateDir . '/docProps/app.xml'));
+    $zip->addFile('xl/worksheets/sheet1.xml', $fullSheetXml);
+    $xlsxContent = $zip->getZip();
+}
+
 $safeFilename = 'Laporan_Bulanan_Radiologi_' . preg_replace('/[^A-Za-z0-9_]/', '_', $bulanText) . '.xlsx';
+
+// Bersihkan output buffer dari whitespace/warning agar payload biner murni
+if (ob_get_length()) {
+    ob_end_clean();
+}
 
 // Kirim header HTTP download
 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
