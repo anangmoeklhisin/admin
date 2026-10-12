@@ -21,17 +21,34 @@
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
 
     <style>
-        *, *::before, *::after {
-            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-        }
         body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, .btn, .form-control {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
         }
-        .fa, .fas, .far, .fal, .fad {
+        .fa, .fas, .far, .fal, .fad,
+        .fa::before, .fas::before, .far::before, .fal::before, .fad::before,
+        .fa::after, .fas::after, .far::after, .fal::after, .fad::after {
             font-family: 'Font Awesome 5 Free' !important;
         }
-        .fab {
+        .fa, .fas,
+        .fa::before, .fas::before,
+        .fa::after, .fas::after {
+            font-weight: 900 !important;
+        }
+        .far, .far::before, .far::after {
+            font-weight: 400 !important;
+        }
+        .fab,
+        .fab::before,
+        .fab::after {
             font-family: 'Font Awesome 5 Brands' !important;
+            font-weight: 400 !important;
+        }
+        .sidebar .nav-item .nav-link[data-toggle="collapse"]::after,
+        #sidebarToggle::after,
+        .sidebar #sidebarToggle::after,
+        .sidebar.toggled #sidebarToggle::after {
+            font-family: 'Font Awesome 5 Free' !important;
+            font-weight: 900 !important;
         }
     </style>
 </head>
