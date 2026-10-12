@@ -10,10 +10,10 @@
 define('DB_HOST', '192.168.1.2');
 define('DB_PORT', '3306');
 define('DB_NAME', 'sik');
-define('DB_USER', 'report_viewer');
-define('DB_PASS', 'PasswordReport123!');
+define('DB_USER', 'didik');
+define('DB_PASS', 'ibnusina1122!');
 define('DB_CHARSET', 'utf8mb4');
-define('DB_TIMEOUT', 3); // Timeout detik untuk koneksi remote intranet
+define('DB_TIMEOUT', 5); // Timeout detik untuk koneksi remote intranet
 
 class Database {
     private static ?PDO $instance = null;

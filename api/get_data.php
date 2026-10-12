@@ -16,19 +16,23 @@ require_once __DIR__ . '/../config/database.php';
 // Ambil parameter filter dari request GET / POST
 $tglMulai = filter_input(INPUT_GET, 'tgl_mulai', FILTER_SANITIZE_SPECIAL_CHARS) 
          ?: filter_input(INPUT_POST, 'tgl_mulai', FILTER_SANITIZE_SPECIAL_CHARS) 
-         ?: date('Y-m-01');
+         ?: ($_GET['tgl_mulai'] ?? $_POST['tgl_mulai'] ?? date('Y-m-01'));
 
 $tglAkhir = filter_input(INPUT_GET, 'tgl_akhir', FILTER_SANITIZE_SPECIAL_CHARS) 
          ?: filter_input(INPUT_POST, 'tgl_akhir', FILTER_SANITIZE_SPECIAL_CHARS) 
-         ?: date('Y-m-d');
+         ?: ($_GET['tgl_akhir'] ?? $_POST['tgl_akhir'] ?? date('Y-m-d'));
 
 $statusRawat = filter_input(INPUT_GET, 'status_rawat', FILTER_SANITIZE_SPECIAL_CHARS) 
             ?: filter_input(INPUT_POST, 'status_rawat', FILTER_SANITIZE_SPECIAL_CHARS) 
-            ?: 'SEMUA'; // 'SEMUA', 'ralan', 'ranap'
+            ?: ($_GET['status_rawat'] ?? $_POST['status_rawat'] ?? 'SEMUA'); // 'SEMUA', 'ralan', 'ranap'
 
 $kategori = filter_input(INPUT_GET, 'kategori', FILTER_SANITIZE_SPECIAL_CHARS) 
          ?: filter_input(INPUT_POST, 'kategori', FILTER_SANITIZE_SPECIAL_CHARS) 
-         ?: 'SEMUA';
+         ?: ($_GET['kategori'] ?? $_POST['kategori'] ?? 'SEMUA');
+
+$unitPerujuk = filter_input(INPUT_GET, 'unit_perujuk', FILTER_SANITIZE_SPECIAL_CHARS) 
+            ?: filter_input(INPUT_POST, 'unit_perujuk', FILTER_SANITIZE_SPECIAL_CHARS) 
+            ?: ($_GET['unit_perujuk'] ?? $_POST['unit_perujuk'] ?? 'SEMUA');
 
 // Validasi format tanggal YYYY-MM-DD
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tglMulai)) {
@@ -94,6 +98,20 @@ if ($pdo !== null) {
             $params[':pemeriksaan'] = '%' . $kategori . '%';
         }
 
+        // Filter unit perujuk jika dipilih spesifik
+        if ($unitPerujuk !== 'SEMUA' && !empty($unitPerujuk)) {
+            if (strtolower($unitPerujuk) === 'rawat inap') {
+                $sql .= " AND (a.status = 'ranap' OR e.nm_poli LIKE :unit_perujuk) ";
+                $params[':unit_perujuk'] = '%' . $unitPerujuk . '%';
+            } elseif (strtolower($unitPerujuk) === 'radiologi') {
+                $sql .= " AND (e.nm_poli LIKE :unit_perujuk OR b.kd_poli = '82') ";
+                $params[':unit_perujuk'] = '%' . $unitPerujuk . '%';
+            } else {
+                $sql .= " AND IFNULL(e.nm_poli, IF(a.status = 'ranap', 'Rawat Inap', 'Poli Registrasi')) LIKE :unit_perujuk ";
+                $params[':unit_perujuk'] = '%' . $unitPerujuk . '%';
+            }
+        }
+
         $sql .= " ORDER BY a.tgl_permintaan DESC, a.jam_permintaan DESC LIMIT 3000";
 
         $stmt = $pdo->prepare($sql);
@@ -123,11 +141,11 @@ if ($pdo !== null) {
         }
     } catch (Exception $e) {
         $isMock = true;
-        $dataResults = generateMockData($tglMulai, $tglAkhir, $statusRawat, $kategori);
+        $dataResults = generateMockData($tglMulai, $tglAkhir, $statusRawat, $kategori, $unitPerujuk);
     }
 } else {
     $isMock = true;
-    $dataResults = generateMockData($tglMulai, $tglAkhir, $statusRawat, $kategori);
+    $dataResults = generateMockData($tglMulai, $tglAkhir, $statusRawat, $kategori, $unitPerujuk);
 }
 
 echo json_encode([
@@ -141,7 +159,8 @@ echo json_encode([
         'tgl_mulai'    => $tglMulai,
         'tgl_akhir'    => $tglAkhir,
         'status_rawat' => $statusRawat,
-        'kategori'     => $kategori
+        'kategori'     => $kategori,
+        'unit_perujuk' => $unitPerujuk
     ],
     'total'      => count($dataResults),
     'data'       => $dataResults
@@ -150,7 +169,7 @@ echo json_encode([
 /**
  * Generator data simulasi SIK RSUSISS untuk pengujian dan demo tanpa database online
  */
-function generateMockData(string $tglMulai, string $tglAkhir, string $statusRawat, string $kategori): array {
+function generateMockData(string $tglMulai, string $tglAkhir, string $statusRawat, string $kategori, string $unitPerujuk = 'SEMUA'): array {
     $pasienList = [
         ['001920', 'Siti Rahmawati'],
         ['001921', 'Budi Santoso'],
@@ -310,6 +329,9 @@ function generateMockData(string $tglMulai, string $tglAkhir, string $statusRawa
         $unit = ($currStatus === 'ranap') 
             ? $unitRanap[$i % count($unitRanap)]
             : $unitRalan[$i % count($unitRalan)];
+        if ($unitPerujuk !== 'SEMUA' && !empty($unitPerujuk)) {
+            $unit = $unitPerujuk;
+        }
 
         $noOrder = 'PR' . str_replace('-', '', $tglPermintaan) . sprintf('%04d', $i + 1);
         $noRawat = str_replace('-', '/', $tglPermintaan) . '/' . sprintf('%06d', $i + 1);

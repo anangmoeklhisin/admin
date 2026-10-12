@@ -57,6 +57,11 @@ $(document).ready(function () {
         loadDataLaporan();
     });
 
+    // Event handler: Ganti Kategori & Unit Perujuk lewat Select
+    $('#kategori, #unit_perujuk').on('change', function () {
+        loadDataLaporan();
+    });
+
     // Event handler: Klik Quick Toggle Tombol Status Rawat (Ranap/Ralan)
     $(document).on('click', '.status-toggle-btn', function (e) {
         e.preventDefault();
@@ -73,6 +78,7 @@ $(document).ready(function () {
         $('#tgl_akhir').val(todayFormatted);
         $('#status_rawat').val('SEMUA');
         $('#kategori').val('SEMUA');
+        $('#unit_perujuk').val('SEMUA');
         updateStatusToggleButtons('SEMUA');
         loadDataLaporan();
     });
@@ -121,13 +127,60 @@ $(document).ready(function () {
     // Event handlers: Export Buttons (Client-Side)
     $('#btn-export-copy').on('click', exportCopy);
     $('#btn-export-csv').on('click', exportCSV);
+    $('#btn-resume-report').on('click', showResumeReport);
+    $('#btn-download-bulanan').on('click', function () {
+        const tglMulai = $('#tgl_mulai').val() || '';
+        const tglAkhir = $('#tgl_akhir').val() || '';
+        if (tglMulai) {
+            const parts = tglMulai.split('-');
+            if (parts.length === 3) {
+                $('#download_bulan').val(parseInt(parts[1], 10));
+                $('#download_tahun').val(parts[0]);
+            }
+        }
+        $('#preview_download_range').text(`${formatTanggalIndo(tglMulai)} s/d ${formatTanggalIndo(tglAkhir)}`);
+        $('#download_opt_month').prop('checked', true);
+        $('#section_download_month').show();
+        $('#section_download_range').hide();
+        $('#modalDownloadBulanan').modal('show');
+    });
+
+    $(document).on('change', 'input[name="download_periode_type"]', function () {
+        const val = $(this).val();
+        if (val === 'month') {
+            $('#section_download_month').slideDown(200);
+            $('#section_download_range').slideUp(200);
+        } else {
+            $('#section_download_month').slideUp(200);
+            $('#section_download_range').slideDown(200);
+        }
+    });
+
+    $('#btn-submit-download-bulanan').on('click', function () {
+        const periodeType = $('input[name="download_periode_type"]:checked').val();
+        let downloadUrl = 'api/export_bulanan.php';
+        if (periodeType === 'month') {
+            const bulan = $('#download_bulan').val();
+            const tahun = $('#download_tahun').val();
+            downloadUrl += `?bulan=${bulan}&tahun=${tahun}`;
+        } else {
+            const tglMulai = $('#tgl_mulai').val() || '';
+            const tglAkhir = $('#tgl_akhir').val() || '';
+            downloadUrl += `?tgl_mulai=${tglMulai}&tgl_akhir=${tglAkhir}`;
+        }
+        $('#modalDownloadBulanan').modal('hide');
+        showToast('Menyiapkan file Excel 6 tabel dalam 1 sheet...', 'info');
+        window.location.href = downloadUrl;
+    });
     $('#btn-export-excel').on('click', exportExcel);
     $('#btn-export-pdf').on('click', exportPDF);
     $('#btn-export-print').on('click', exportPrint);
+    $('#btn-print-resume').on('click', printResumeReport);
 
     // Event handler: Modal Test Koneksi DB
     $('#btn-test-db').on('click', testDatabaseConnection);
     checkDbStatusBadge();
+    initUnitPerujukOptions();
 
     // Auto-adjust kolom saat ukuran layar berubah (Responsive Full Width)
     $(window).on('resize', function () {
@@ -238,6 +291,7 @@ function loadDataLaporan() {
     const tglAkhir = $('#tgl_akhir').val();
     const statusRawat = $('#status_rawat').val() || 'SEMUA';
     const kategori = $('#kategori').val() || 'SEMUA';
+    const unitPerujuk = $('#unit_perujuk').val() || 'SEMUA';
 
     // Tampilkan state loading
     const $btnFilter = $('#btn-filter');
@@ -249,12 +303,14 @@ function loadDataLaporan() {
     $.ajax({
         url: 'api/get_data.php',
         type: 'GET',
+        cache: false,
         dataType: 'json',
         data: {
             tgl_mulai: tglMulai,
             tgl_akhir: tglAkhir,
             status_rawat: statusRawat,
-            kategori: kategori
+            kategori: kategori,
+            unit_perujuk: unitPerujuk
         },
         success: function (response) {
             if (response.status === 'success') {
@@ -852,4 +908,275 @@ function escapeXml(text) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&apos;");
+}
+
+/**
+ * Menampilkan Modal Resume & Rekapitulasi Laporan
+ */
+function showResumeReport() {
+    if (!currentReportData || currentReportData.length === 0) {
+        showToast('Tidak ada data laporan untuk diresume. Silakan klik Tampilkan data terlebih dahulu.', 'warning');
+        return;
+    }
+
+    const tglMulai = $('#tgl_mulai').val();
+    const tglAkhir = $('#tgl_akhir').val();
+    const statusVal = $('#status_rawat').val() || 'SEMUA';
+    const kategoriVal = $('#kategori option:selected').text();
+    const unitVal = $('#unit_perujuk option:selected').text();
+    let statusText = 'Semua Status (Ranap & Ralan)';
+    if (statusVal === 'ralan') statusText = 'Rawat Jalan (Ralan)';
+    if (statusVal === 'ranap') statusText = 'Rawat Inap (Ranap)';
+
+    $('#resume-title-periode').text(`Periode: ${formatTanggalIndo(tglMulai)} s/d ${formatTanggalIndo(tglAkhir)}`);
+    $('#resume-badge-status').text(statusText);
+    $('#resume-badge-kategori').text(kategoriVal);
+    $('#resume-badge-unit').text(unitVal);
+    $('#resume-timestamp').text(new Date().toLocaleString('id-ID'));
+
+    // Agregasi Data
+    let totalItems = currentReportData.length;
+    let totalRalan = 0;
+    let totalRanap = 0;
+
+    let groupTindakan = {};
+    let groupUnit = {};
+    let groupDokter = {};
+
+    currentReportData.forEach(row => {
+        // Status rawat
+        if (row.status_rawat === 'ranap') totalRanap++;
+        else totalRalan++;
+
+        // Tindakan
+        const t = row.pemeriksaan || 'Lain-lain';
+        groupTindakan[t] = (groupTindakan[t] || 0) + 1;
+
+        // Unit perujuk
+        const u = row.unit_perujuk || 'Lain-lain';
+        groupUnit[u] = (groupUnit[u] || 0) + 1;
+
+        // Dokter
+        const d = row.dokter_pengirim || '-';
+        groupDokter[d] = (groupDokter[d] || 0) + 1;
+    });
+
+    $('#resume-total-items').text(totalItems.toLocaleString('id-ID'));
+    $('#resume-total-ralan').text(totalRalan.toLocaleString('id-ID'));
+    $('#resume-total-ranap').text(totalRanap.toLocaleString('id-ID'));
+    $('#resume-total-variasi').text(Object.keys(groupTindakan).length + ' Tindakan');
+
+    // Helper render tabel rekap
+    function renderRekapTable(groupObj, tbodyId) {
+        const sorted = Object.entries(groupObj).sort((a, b) => b[1] - a[1]);
+        let html = '';
+        sorted.forEach(([name, count], idx) => {
+            const pct = ((count / totalItems) * 100).toFixed(1);
+            html += `
+                <tr>
+                    <td class="text-center font-weight-bold text-muted">${idx + 1}</td>
+                    <td class="font-weight-bold text-gray-800">${escapeHtml(name)}</td>
+                    <td class="text-center font-weight-bold text-primary">${count.toLocaleString('id-ID')}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <span class="mr-2 small font-weight-bold text-muted" style="min-width: 42px;">${pct}%</span>
+                            <div class="progress flex-grow-1" style="height: 6px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: ${pct}%;"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        $(`#${tbodyId}`).html(html);
+    }
+
+    renderRekapTable(groupTindakan, 'tbody-resume-tindakan');
+    renderRekapTable(groupUnit, 'tbody-resume-unit');
+    renderRekapTable(groupDokter, 'tbody-resume-dokter');
+
+    $('#resumeReportModal').modal('show');
+}
+
+/**
+ * Cetak Dokumen Resume Report
+ */
+function printResumeReport() {
+    if (!currentReportData || currentReportData.length === 0) return;
+
+    const tglMulai = formatTanggalIndo($('#tgl_mulai').val());
+    const tglAkhir = formatTanggalIndo($('#tgl_akhir').val());
+    const statusVal = $('#status_rawat').val() || 'SEMUA';
+    const kategoriVal = $('#kategori option:selected').text();
+    let statusText = 'Semua Status (Ranap & Ralan)';
+    if (statusVal === 'ralan') statusText = 'Rawat Jalan (Ralan)';
+    if (statusVal === 'ranap') statusText = 'Rawat Inap (Ranap)';
+
+    let totalItems = currentReportData.length;
+    let totalRalan = 0;
+    let totalRanap = 0;
+    let groupTindakan = {};
+    let groupUnit = {};
+
+    currentReportData.forEach(row => {
+        if (row.status_rawat === 'ranap') totalRanap++;
+        else totalRalan++;
+
+        const t = row.pemeriksaan || 'Lain-lain';
+        groupTindakan[t] = (groupTindakan[t] || 0) + 1;
+
+        const u = row.unit_perujuk || 'Lain-lain';
+        groupUnit[u] = (groupUnit[u] || 0) + 1;
+    });
+
+    const sortedTindakan = Object.entries(groupTindakan).sort((a, b) => b[1] - a[1]);
+    const sortedUnit = Object.entries(groupUnit).sort((a, b) => b[1] - a[1]);
+
+    let tindakanRows = '';
+    sortedTindakan.forEach(([name, count], idx) => {
+        const pct = ((count / totalItems) * 100).toFixed(1);
+        tindakanRows += `<tr><td style="text-align:center;">${idx + 1}</td><td>${escapeHtml(name)}</td><td style="text-align:center; font-weight:bold;">${count}</td><td style="text-align:center;">${pct}%</td></tr>`;
+    });
+
+    let unitRows = '';
+    sortedUnit.forEach(([name, count], idx) => {
+        const pct = ((count / totalItems) * 100).toFixed(1);
+        unitRows += `<tr><td style="text-align:center;">${idx + 1}</td><td>${escapeHtml(name)}</td><td style="text-align:center; font-weight:bold;">${count}</td><td style="text-align:center;">${pct}%</td></tr>`;
+    });
+
+    const printWin = window.open('', '_blank');
+    printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Resume & Rekapitulasi Laporan Radiologi - RSUSISS</title>
+            <style>
+                @page { size: A4 portrait; margin: 15mm; }
+                body { font-family: Arial, sans-serif; font-size: 11pt; color: #333; margin: 0; }
+                .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; }
+                .header h2 { margin: 0 0 4px 0; font-size: 15pt; }
+                .header h3 { margin: 0 0 4px 0; font-size: 12pt; font-weight: normal; }
+                .header p { margin: 0; font-size: 9pt; color: #555; }
+                .meta-table { width: 100%; margin-bottom: 15px; font-size: 10pt; }
+                .meta-table td { padding: 3px 0; }
+                .summary-box { display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; background: #f9f9f9; }
+                .summary-item { text-align: center; flex: 1; }
+                .summary-item .num { font-size: 16pt; font-weight: bold; color: #0275d8; }
+                .summary-item .lbl { font-size: 9pt; color: #666; text-transform: uppercase; }
+                table.data { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10pt; }
+                table.data th, table.data td { border: 1px solid #888; padding: 6px 8px; }
+                table.data th { background: #e9ecef; }
+                .section-title { font-size: 11pt; font-weight: bold; margin: 15px 0 6px 0; border-left: 4px solid #0275d8; padding-left: 8px; }
+                .footer { margin-top: 30px; display: flex; justify-content: space-between; font-size: 10pt; }
+                .ttd-box { text-align: center; width: 220px; }
+                .ttd-space { height: 60px; }
+            </style>
+        </head>
+        <body onload="window.print(); window.close();">
+            <div class="header">
+                <h2>RUMAH SAKIT SARAS IBNU SINA SUKOWATI</h2>
+                <h3>RESUME &amp; REKAPITULASI PELAYANAN RADIOLOGI</h3>
+                <p>Jl. Raya Sukowati No. 123, Sragen | Telp: (0271) 891234</p>
+            </div>
+            <table class="meta-table">
+                <tr>
+                    <td style="width:18%;"><strong>Periode Laporan</strong></td>
+                    <td style="width:2%;">:</td>
+                    <td>${tglMulai} s/d ${tglAkhir}</td>
+                    <td style="width:18%;"><strong>Filter Pemeriksaan</strong></td>
+                    <td style="width:2%;">:</td>
+                    <td>${escapeHtml(kategoriVal)}</td>
+                </tr>
+                <tr>
+                    <td><strong>Jenis Rawat</strong></td>
+                    <td>:</td>
+                    <td>${statusText}</td>
+                    <td><strong>Waktu Cetak</strong></td>
+                    <td>:</td>
+                    <td>${new Date().toLocaleString('id-ID')}</td>
+                </tr>
+            </table>
+
+            <div class="summary-box">
+                <div class="summary-item">
+                    <div class="num">${totalItems}</div>
+                    <div class="lbl">Total Pemeriksaan</div>
+                </div>
+                <div class="summary-item">
+                    <div class="num">${totalRalan}</div>
+                    <div class="lbl">Rawat Jalan (Ralan)</div>
+                </div>
+                <div class="summary-item">
+                    <div class="num">${totalRanap}</div>
+                    <div class="lbl">Rawat Inap (Ranap)</div>
+                </div>
+                <div class="summary-item">
+                    <div class="num">${sortedTindakan.length}</div>
+                    <div class="lbl">Variasi Tindakan</div>
+                </div>
+            </div>
+
+            <div class="section-title">A. Rekapitulasi per Jenis Tindakan / Pemeriksaan</div>
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th style="width:30px; text-align:center;">No</th>
+                        <th>Nama Pemeriksaan</th>
+                        <th style="width:80px; text-align:center;">Jumlah</th>
+                        <th style="width:80px; text-align:center;">Persentase</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tindakanRows}
+                </tbody>
+            </table>
+
+            <div class="section-title">B. Rekapitulasi per Unit Perujuk</div>
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th style="width:30px; text-align:center;">No</th>
+                        <th>Unit / Ruang Perujuk</th>
+                        <th style="width:80px; text-align:center;">Jumlah</th>
+                        <th style="width:80px; text-align:center;">Persentase</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${unitRows}
+                </tbody>
+            </table>
+
+            <div class="footer">
+                <div><small>* Dicetak secara otomatis oleh sistem reporting SIK</small></div>
+                <div class="ttd-box">
+                    <p style="margin:0 0 5px 0;">Penanggung Jawab Radiologi,</p>
+                    <div class="ttd-space"></div>
+                    <p style="margin:0; font-weight:bold; text-decoration:underline;">dr. H. Anang Moekhlisin, Sp.Rad</p>
+                    <small>Dokter Spesialis Radiologi</small>
+                </div>
+            </div>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
+}
+
+/**
+ * Mengambil daftar unik unit perujuk dari database dan menambahkan ke dropdown jika belum ada
+ */
+function initUnitPerujukOptions() {
+    $.getJSON('api/get_units.php', function (res) {
+        if (res && res.status === 'success' && Array.isArray(res.data) && res.data.length > 0) {
+            const $select = $('#unit_perujuk');
+            const existing = [];
+            $select.find('option').each(function () {
+                existing.push($(this).val());
+            });
+            res.data.forEach(function (u) {
+                if (u && !existing.includes(u)) {
+                    $select.append(`<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`);
+                }
+            });
+        }
+    });
 }

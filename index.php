@@ -15,6 +15,9 @@ $dbStatus = Database::getStatus();
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="description" content="WebApps Ekstraktor & Laporan Data SIK - RSUSISS">
     <meta name="author" content="Data RSUSISS">
 
@@ -119,17 +122,40 @@ $dbStatus = Database::getStatus();
         .filter-card:hover {
             box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08) !important;
         }
+        .export-btn-group {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.4rem;
+        }
         .export-btn-group .btn {
-            font-size: 0.85rem;
+            font-size: 0.83rem;
             font-weight: 600;
-            padding: 0.45rem 0.85rem;
+            padding: 0.42rem 0.85rem;
             display: inline-flex;
             align-items: center;
-            gap: 0.35rem;
+            justify-content: center;
+            line-height: 1.2;
             border-radius: 0.35rem;
-            margin-right: 0.25rem;
-            margin-bottom: 0.35rem;
-            transition: transform 0.15s ease;
+            margin: 0;
+            white-space: nowrap;
+            transition: all 0.15s ease-in-out;
+        }
+        .export-btn-group .btn i {
+            font-size: 0.88rem;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.45rem;
+            vertical-align: middle;
+            position: relative;
+            top: -0.5px;
+        }
+        .export-btn-group .btn span {
+            display: inline-block;
+            line-height: 1;
+            vertical-align: middle;
         }
         .export-btn-group .btn:hover {
             transform: translateY(-1px);
@@ -202,13 +228,13 @@ $dbStatus = Database::getStatus();
 
 </head>
 
-<body id="page-top">
+<body id="page-top" class="sidebar-toggled">
 
     <!-- Page Wrapper -->
     <div id="wrapper">
 
         <!-- Sidebar -->
-        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion toggled" id="accordionSidebar">
 
             <!-- Sidebar - Brand -->
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
@@ -329,23 +355,13 @@ $dbStatus = Database::getStatus();
                                 <i class="fas fa-filter mr-1"></i> Parameter Pencarian & Filter Radiologi
                             </h6>
                             <!-- Quick Toggle Status Rawat (Ranap & Ralan) -->
-                            <div class="btn-group btn-group-sm" role="group" id="btnGroupStatusRawat">
-                                <button type="button" class="btn btn-primary btn-sm status-toggle-btn active font-weight-bold" data-status="SEMUA">
-                                    <i class="fas fa-list mr-1"></i> Semua
-                                </button>
-                                <button type="button" class="btn btn-outline-info btn-sm status-toggle-btn font-weight-bold" data-status="ralan">
-                                    <i class="fas fa-walking mr-1"></i> Rawat Jalan (Ralan)
-                                </button>
-                                <button type="button" class="btn btn-outline-success btn-sm status-toggle-btn font-weight-bold" data-status="ranap">
-                                    <i class="fas fa-bed mr-1"></i> Rawat Inap (Ranap)
-                                </button>
-                            </div>
+                          
                         </div>
                         <div class="card-body">
                             <form id="formFilter" onsubmit="return false;">
                                 <div class="form-row align-items-end">
                                     <!-- Input: Tanggal Mulai (F1.01) -->
-                                    <div class="form-group col-md-2 col-sm-6 mb-2">
+                                    <div class="form-group col-xl-2 col-lg-2 col-md-4 col-sm-6 mb-2">
                                         <label for="tgl_mulai" class="small font-weight-bold text-gray-700">
                                             <i class="far fa-calendar-alt text-primary mr-1"></i> Tanggal Mulai
                                         </label>
@@ -353,7 +369,7 @@ $dbStatus = Database::getStatus();
                                     </div>
 
                                     <!-- Input: Tanggal Akhir (F1.01) -->
-                                    <div class="form-group col-md-2 col-sm-6 mb-2">
+                                    <div class="form-group col-xl-2 col-lg-2 col-md-4 col-sm-6 mb-2">
                                         <label for="tgl_akhir" class="small font-weight-bold text-gray-700">
                                             <i class="far fa-calendar-check text-primary mr-1"></i> Tanggal Akhir
                                         </label>
@@ -361,7 +377,7 @@ $dbStatus = Database::getStatus();
                                     </div>
 
                                     <!-- Select: Status / Jenis Rawat (Ranap / Ralan) -->
-                                    <div class="form-group col-md-3 col-sm-6 mb-2">
+                                    <div class="form-group col-xl-2 col-lg-2 col-md-4 col-sm-6 mb-2">
                                         <label for="status_rawat" class="small font-weight-bold text-gray-700">
                                             <i class="fas fa-hospital-user text-primary mr-1"></i> Jenis Rawat
                                         </label>
@@ -373,7 +389,7 @@ $dbStatus = Database::getStatus();
                                     </div>
 
                                     <!-- Select: Pemeriksaan Radiologi (F1.01) -->
-                                    <div class="form-group col-md-3 col-sm-6 mb-2">
+                                    <div class="form-group col-xl-2 col-lg-2 col-md-4 col-sm-6 mb-2">
                                         <label for="kategori" class="small font-weight-bold text-gray-700">
                                             <i class="fas fa-x-ray text-primary mr-1"></i> Pemeriksaan Radiologi
                                         </label>
@@ -381,21 +397,42 @@ $dbStatus = Database::getStatus();
                                             <option value="SEMUA" selected>Semua Pemeriksaan Radiologi</option>
                                             <option value="Thorax">Thorax Foto (Rontgen Dada)</option>
                                             <option value="USG">USG (Abdomen / Kandungan)</option>
-                                            <option value="CT-Scan">CT-Scan (Kepala / Non-Kontras)</option>
-                                            <option value="Extremitas">Foto Extremitas / Tulang</option>
-                                            <option value="Panoramic">Panoramic Gigi / Dental</option>
-                                            <option value="Lumbosacral">Foto Vertebra / Lumbosacral</option>
+                                            <option value="msct">MSCT</option>
                                         </select>
                                     </div>
 
-                                    <!-- Tombol: Tampilkan Data & Reset (F1.02) -->
-                                    <div class="form-group col-md-2 col-sm-6 mb-2">
+                                    <!-- Select: Unit Perujuk -->
+                                    <div class="form-group col-xl-2 col-lg-2 col-md-4 col-sm-6 mb-2">
+                                        <label for="unit_perujuk" class="small font-weight-bold text-gray-700">
+                                            <i class="fas fa-clinic-medical text-primary mr-1"></i> Unit Perujuk
+                                        </label>
+                                        <select class="form-control form-control-sm" id="unit_perujuk" name="unit_perujuk" onchange="loadDataLaporan();">
+                                            <option value="SEMUA" selected>Semua Unit Perujuk</option>
+                                            <option value="IGD">IGD</option>
+                                            <option value="Radiologi">Radiologi</option>
+                                            <option value="Klinik Bedah Orthopedi">Klinik Bedah Orthopedi</option>
+                                            <option value="Klinik Penyakit Dalam">Klinik Penyakit Dalam</option>
+                                            <option value="Klinik Saraf">Klinik Saraf</option>
+                                            <option value="Klinik Bedah umum">Klinik Bedah umum</option>
+                                            <option value="Klinik Anak">Klinik Anak</option>
+                                            <option value="Klinik Jantung">Klinik Jantung</option>
+                                            <option value="Klinik Bedah Umum (Sore)">Klinik Bedah Umum (Sore)</option>
+                                            <option value="Klinik Mata">Klinik Mata</option>
+                                            <option value="Klinik Obsgyn">Klinik Obsgyn</option>
+                                            <option value="Klinik Umum">Klinik Umum</option>
+                                            <option value="Kinik Jiwa">Kinik Jiwa</option>
+                                            <option value="Klinik MCU">Klinik MCU</option>
+                                            <option value="Fisioterapi">Fisioterapi</option>
+                                            <option value="Laboratorium">Laboratorium</option>
+                                            <option value="Rawat Inap">Rawat Inap</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Tombol: Tampilkan Data (F1.02) -->
+                                    <div class="form-group col-xl-2 col-lg-2 col-md-4 col-sm-6 mb-2">
                                         <div class="btn-group w-100" role="group">
-                                            <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="btn-filter">
-                                                <i class="fas fa-search mr-1"></i> Tampilkan
-                                            </button>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-reset" title="Kembalikan Filter Awal">
-                                                <i class="fas fa-undo"></i>
+                                            <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="btn-filter" onclick="loadDataLaporan();" title="Tampilkan Data">
+                                                <i class="fas fa-search"></i>
                                             </button>
                                         </div>
                                     </div>
@@ -422,25 +459,24 @@ $dbStatus = Database::getStatus();
 
                         <div class="card-header py-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between bg-white border-bottom">
                             <h6 class="m-0 font-weight-bold text-primary mb-2 mb-md-0">
-                                <i class="fas fa-table mr-1"></i> Data Viewer Laporan SIK
+                                <i class="fas fa-table mr-1"></i> 
                             </h6>
 
-                            <!-- Modul Ekspor Laporan (F3.01, F3.02 & F3.03: Copy, CSV, Excel, PDF, Print) -->
                             <div class="export-btn-group">
-                               <!--  <button type="button" class="btn btn-secondary shadow-sm" id="btn-export-copy" title="Salin data tabel ke clipboard">
-                                    <i class="fas fa-copy text-white-50"></i> Copy
+                                <button type="button" class="btn btn-info shadow-sm" id="btn-download-bulanan" title="Download Laporan Bulanan">
+                                    <i class="fas fa-file-download"></i><span>Download Laporan</span>
                                 </button>
-                                <button type="button" class="btn btn-info shadow-sm" id="btn-export-csv" title="Unduh file format CSV">
-                                    <i class="fas fa-file-csv text-white-50"></i> CSV
-                                </button> -->
+                                <button type="button" class="btn btn-primary shadow-sm" id="btn-resume-report" title="Lihat Resume & Rekapitulasi Laporan">
+                                    <i class="fas fa-file-invoice"></i><span>Resume Report</span>
+                                </button>
                                 <button type="button" class="btn btn-success shadow-sm" id="btn-export-excel" title="Unduh file format Microsoft Excel">
-                                    <i class="fas fa-file-excel text-white-50"></i> Excel (.xlsx)
+                                    <i class="fas fa-file-excel"></i><span>Excel (.xlsx)</span>
                                 </button>
                                 <button type="button" class="btn btn-danger shadow-sm" id="btn-export-pdf" title="Cetak / Unduh dokumen PDF">
-                                    <i class="fas fa-file-pdf text-white-50"></i> PDF
+                                    <i class="fas fa-file-pdf"></i><span>PDF</span>
                                 </button>
                                 <button type="button" class="btn btn-dark shadow-sm" id="btn-export-print" title="Cetak laporan langsung">
-                                    <i class="fas fa-print text-white-50"></i> Print
+                                    <i class="fas fa-print"></i><span>Print</span>
                                 </button>
                             </div>
                         </div>
@@ -498,6 +534,262 @@ $dbStatus = Database::getStatus();
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
+
+    <!-- ============================================================== -->
+    <!-- MODAL: RESUME & REKAPITULASI LAPORAN RADIOLOGI                 -->
+    <!-- ============================================================== -->
+    <div class="modal fade" id="resumeReportModal" tabindex="-1" role="dialog" aria-labelledby="resumeReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold" id="resumeReportModalLabel">
+                        <i class="fas fa-file-invoice mr-2"></i> Resume &amp; Rekapitulasi Laporan Radiologi
+                    </h5>
+                    <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Info Header Periode & Filter -->
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center bg-light p-3 rounded mb-3 border">
+                        <div>
+                            <h6 class="font-weight-bold text-gray-800 mb-1" id="resume-title-periode">Periode: -</h6>
+                            <span class="badge badge-primary px-2 py-1" id="resume-badge-status">Semua Status Rawat</span>
+                            <span class="badge badge-info px-2 py-1" id="resume-badge-kategori">Semua Pemeriksaan</span>
+                            <span class="badge badge-secondary px-2 py-1" id="resume-badge-unit">Semua Unit Perujuk</span>
+                        </div>
+                        <div class="mt-2 mt-md-0 text-md-right">
+                            <span class="text-muted small">Waktu Resume Dibuat:</span>
+                            <div class="font-weight-bold small text-gray-700" id="resume-timestamp">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Mini KPI Summary Cards -->
+                    <div class="row mb-3">
+                        <div class="col-xl-3 col-md-6 mb-2">
+                            <div class="card border-left-primary shadow-sm h-100 py-2">
+                                <div class="card-body py-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Pemeriksaan</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="resume-total-items">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-2">
+                            <div class="card border-left-info shadow-sm h-100 py-2">
+                                <div class="card-body py-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Rawat Jalan (Ralan)</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="resume-total-ralan">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-2">
+                            <div class="card border-left-success shadow-sm h-100 py-2">
+                                <div class="card-body py-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Rawat Inap (Ranap)</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="resume-total-ranap">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-2">
+                            <div class="card border-left-warning shadow-sm h-100 py-2">
+                                <div class="card-body py-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Variasi Tindakan</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="resume-total-variasi">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nav Tabs untuk Detail Rekap -->
+                    <ul class="nav nav-pills mb-3" id="resumeTab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active font-weight-bold" id="tab-tindakan-tab" data-toggle="pill" href="#tab-tindakan" role="tab">
+                                <i class="fas fa-x-ray mr-1"></i> Per Jenis Pemeriksaan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link font-weight-bold" id="tab-unit-tab" data-toggle="pill" href="#tab-unit" role="tab">
+                                <i class="fas fa-clinic-medical mr-1"></i> Per Unit Perujuk
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link font-weight-bold" id="tab-dokter-tab" data-toggle="pill" href="#tab-dokter" role="tab">
+                                <i class="fas fa-user-md mr-1"></i> Per Dokter Pengirim
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content border rounded p-3 bg-white" id="resumeTabContent" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Tab 1: Tindakan -->
+                        <div class="tab-pane fade show active" id="tab-tindakan" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped table-bordered table-hover mb-0" id="table-resume-tindakan">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="text-center" style="width: 50px;">NO</th>
+                                            <th>NAMA PEMERIKSAAN / TINDAKAN</th>
+                                            <th class="text-center" style="width: 120px;">JUMLAH</th>
+                                            <th class="text-center" style="width: 160px;">PERSENTASE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-resume-tindakan"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Unit Perujuk -->
+                        <div class="tab-pane fade" id="tab-unit" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped table-bordered table-hover mb-0" id="table-resume-unit">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="text-center" style="width: 50px;">NO</th>
+                                            <th>UNIT / POLI PERUJUK</th>
+                                            <th class="text-center" style="width: 120px;">JUMLAH</th>
+                                            <th class="text-center" style="width: 160px;">PERSENTASE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-resume-unit"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Dokter Pengirim -->
+                        <div class="tab-pane fade" id="tab-dokter" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped table-bordered table-hover mb-0" id="table-resume-dokter">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="text-center" style="width: 50px;">NO</th>
+                                            <th>DOKTER PENGIRIM</th>
+                                            <th class="text-center" style="width: 120px;">JUMLAH</th>
+                                            <th class="text-center" style="width: 160px;">PERSENTASE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-resume-dokter"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> Tutup
+                    </button>
+                    <button type="button" class="btn btn-dark shadow-sm" id="btn-print-resume">
+                        <i class="fas fa-print mr-1"></i> Cetak Resume
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL: DOWNLOAD LAPORAN BULANAN (EXCEL 6 TABEL - 1 SHEET)      -->
+    <!-- ============================================================== -->
+    <div class="modal fade" id="modalDownloadBulanan" tabindex="-1" role="dialog" aria-labelledby="modalDownloadBulananLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title font-weight-bold" id="modalDownloadBulananLabel">
+                        <i class="fas fa-file-download mr-2"></i> Download Laporan Bulanan Radiologi (1 Sheet, 6 Tabel)
+                    </h5>
+                    <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-primary border-0 shadow-sm d-flex align-items-center mb-3">
+                        <div class="mr-3">
+                            <i class="fas fa-file-excel fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <div class="font-weight-bold">Format Standar 6 Tabel Bertingkat (1 Lembar Kerja / 1 Sheet)</div>
+                            <small class="text-muted">File Excel (.xlsx) akan otomatis menyusun 6 tabel pemeriksaan radiologi secara berurutan sesuai format resmi contoh laporan RSUSISS.</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="font-weight-bold text-gray-700 small mb-2 d-block">
+                            <i class="fas fa-filter mr-1 text-info"></i> Opsi Periode Laporan:
+                        </label>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" id="download_opt_month" name="download_periode_type" class="custom-control-input" value="month" checked>
+                            <label class="custom-control-label small font-weight-bold" for="download_opt_month">Pilih Bulan &amp; Tahun (1 Bulan Penuh)</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" id="download_opt_range" name="download_periode_type" class="custom-control-input" value="range">
+                            <label class="custom-control-label small font-weight-bold" for="download_opt_range">Gunakan Rentang Tanggal Filter Halaman</label>
+                        </div>
+                    </div>
+
+                    <div id="section_download_month" class="row">
+                        <!-- Pilihan: Pilih Bulan & Tahun -->
+                        <div class="col-md-6 mb-3">
+                            <label class="font-weight-bold text-gray-700 small">
+                                <i class="far fa-calendar-alt mr-1 text-info"></i> Pilih Bulan:
+                            </label>
+                            <select class="form-control" id="download_bulan">
+                                <option value="1">Januari</option>
+                                <option value="2">Februari</option>
+                                <option value="3">Maret</option>
+                                <option value="4">April</option>
+                                <option value="5">Mei</option>
+                                <option value="6">Juni</option>
+                                <option value="7">Juli</option>
+                                <option value="8">Agustus</option>
+                                <option value="9">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="font-weight-bold text-gray-700 small">
+                                <i class="fas fa-calendar mr-1 text-info"></i> Pilih Tahun:
+                            </label>
+                            <select class="form-control" id="download_tahun">
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="section_download_range" class="alert alert-info border-0 p-2 small mb-3" style="display: none;">
+                        <i class="fas fa-info-circle mr-1"></i> File Excel akan diekspor sesuai tanggal filter aktif: <strong id="preview_download_range"></strong>
+                    </div>
+
+                    <!-- Ringkasan Isi 6 Tabel -->
+                    <div class="card border-0 bg-light rounded mt-2">
+                        <div class="card-body p-3">
+                            <h6 class="font-weight-bold text-gray-800 small mb-2">
+                                <i class="fas fa-list-ol mr-1 text-info"></i> Rincian 6 Tabel yang Diekspor ke Dalam Sheet:
+                            </h6>
+                            <ol class="small text-muted mb-0 pl-3">
+                                <li class="mb-1"><strong>Tabel 1:</strong> Rontgen Tanpa Kontras Rawat Jalan (Tanpa USG &amp; MSCT)</li>
+                                <li class="mb-1"><strong>Tabel 2:</strong> Rontgen Tanpa Kontras Rawat Inap (Tanpa USG &amp; MSCT)</li>
+                                <li class="mb-1"><strong>Tabel 3:</strong> Pemeriksaan USG Rawat Jalan</li>
+                                <li class="mb-1"><strong>Tabel 4:</strong> Pemeriksaan USG Rawat Inap</li>
+                                <li class="mb-1"><strong>Tabel 5:</strong> Rontgen Tanpa Kontras Rujukan Dari Luar RS (Unit Radiologi)</li>
+                                <li><strong>Tabel 6:</strong> Pasien Radiologi Rujukan Ke Luar RS (MSCT)</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> Batal
+                    </button>
+                    <button type="button" class="btn btn-success shadow-sm" id="btn-submit-download-bulanan">
+                        <i class="fas fa-file-excel mr-1"></i> Unduh File Excel (.xlsx)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================================== -->
     <!-- MODAL: KONEKSI DATABASE (Setting / Info Split Server)          -->
@@ -641,7 +933,7 @@ $dbStatus = Database::getStatus();
     <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
     <!-- Page level custom script untuk Laporan SIK -->
-    <script src="js/laporan-sik.js"></script>
+    <script src="js/laporan-sik.js?v=<?= time() ?>"></script>
 
 </body>
 
